@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yahao - 在线图片去背景</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --neon-cyan: #0ff;
+            --neon-pink: #f0f;
+            --neon-yellow: #ff0;
+            --dark-bg: #050505;
+            --panel-bg: rgba(10, 10, 15, 0.8);
+        }
+
+        body {
+            font-family: 'Share Tech Mono', 'Microsoft YaHei', sans-serif;
+            background-color: var(--dark-bg);
+            color: #fff;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            overflow-x: hidden;
+        }
+
+        /* 扫描线效果 */
+        .scanlines::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 50;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* 赛博朋克发光边框容器 */
+        .cyber-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2), inset 0 0 15px rgba(0, 255, 255, 0.1);
+            position: relative;
+        }
+        
+        .cyber-panel::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            right: -1px;
+            width: 20px;
+            height: 20px;
+            border-bottom: 2px solid var(--neon-pink);
+            border-right: 2px solid var(--neon-pink);
+            box-shadow: 2px 2px 5px rgba(255, 0, 255, 0.5);
+        }
+
+        /* 赛博朋克按钮 */
+        .cyber-btn {
+            background: transparent;
+            border: 1px solid var(--neon-pink);
+            color: var(--neon-pink);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 5px var(--neon-pink);
+            box-shadow: 0 0 5px rgba(255, 0, 255, 0.3), inset 0 0 5px rgba(255, 0, 255, 0.3);
+        }
+
+        .cyber-btn:hover {
+            background: var(--neon-pink);
+            color: var(--dark-bg);
+            box-shadow: 0 0 20px var(--neon-pink), inset 0 0 10px rgba(255, 255, 255, 0.5);
+            text-shadow: none;
+        }
+
+        .cyber-btn.cyan-btn {
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            text-shadow: 0 0 5px var(--neon-cyan);
+            box-shadow: 0 0 5px rgba(0, 255, 255, 0.3), inset 0 0 5px rgba(0, 255, 255, 0.3);
+        }
+        
+        .cyber-btn.cyan-btn:hover {
+            background: var(--neon-cyan);
+            color: var(--dark-bg);
+            box-shadow: 0 0 20px var(--neon-cyan), inset 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        /* 自定义滑块 */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(0, 255, 255, 0.3);
+            border-radius: 2px;
+            box-shadow: 0 0 5px var(--neon-cyan);
+        }
+        input[type=range]::-webkit-slider-thumb {
+            box-shadow: 0 0 10px var(--neon-pink);
+            border: 2px solid var(--neon-pink);
+            height: 18px;
+            width: 10px;
+            border-radius: 0;
+            background: var(--dark-bg);
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -7px;
+        }
+
+        /* 故障文字效果 */
+        .glitch-text {
+            position: relative;
+            color: white;
+            text-shadow: 2px 2px var(--neon-pink), -2px -2px var(--neon-cyan);
+            animation: glitch-anim 3s infinite linear alternate-reverse;
+        }
+        
+        @keyframes glitch-anim {
+            0% { text-shadow: 2px 2px var(--neon-pink), -2px -2px var(--neon-cyan); }
+            20% { text-shadow: -2px 2px var(--neon-pink), 2px -2px var(--neon-cyan); }
+            40% { text-shadow: 2px -2px var(--neon-pink), -2px 2px var(--neon-cyan); }
+            60% { text-shadow: -2px -2px var(--neon-pink), 2px 2px var(--neon-cyan); }
+            80% { text-shadow: 2px 2px var(--neon-pink), -2px -2px var(--neon-cyan); }
+            100% { text-shadow: 1px 1px var(--neon-pink), -1px -1px var(--neon-cyan); }
+        }
+
+        /* 暗色透明棋盘格，完美适配赛博风 */
+        .checkerboard-dark {
+            background-color: #111;
+            background-image: 
+                linear-gradient(45deg, #222 25%, transparent 25%), 
+                linear-gradient(-45deg, #222 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #222 75%), 
+                linear-gradient(-45deg, transparent 75%, #222 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+
+        /* 自定义文件上传按钮 */
+        .file-upload-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        .file-upload-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="scanlines min-h-screen flex flex-col items-center justify-center p-4 md:p-8">
+
+    <header class="w-full max-w-6xl mb-8 flex flex-col md:flex-row justify-between items-end border-b border-cyan-500 pb-4">
+        <div>
+            <h1 class="text-4xl md:text-5xl font-black italic tracking-tighter glitch-text mb-2">Yahao - 在线图片去背景</h1>
+            <p class="text-cyan-400 text-sm md:text-base tracking-widest">[ 节点级去背协议 v2.0 // 本地算力直连 ]</p>
+        </div>
+        <div class="text-right mt-4 md:mt-0 hidden md:block text-xs text-pink-500 font-bold opacity-80">
+            系统状态: 稳定在线<br>
+            网络延迟: 0ms (本地终端处理)
+        </div>
+    </header>
+
+    <main class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="cyber-panel p-6 lg:col-span-4 flex flex-col gap-6 h-fit relative z-10">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-50"></div>
+            
+            <h2 class="text-xl text-cyan-300 font-bold border-l-4 border-pink-500 pl-3 uppercase">终端控制台</h2>
+            
+            <div class="space-y-2">
+                <label class="text-sm text-gray-400 uppercase">> 目标图像节点</label>
+                <div class="file-upload-wrapper">
+                    <button class="cyber-btn cyan-btn w-full py-3 font-bold flex justify-center items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        [ 载入本地图像 ]
+                    </button>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-sm text-gray-400 uppercase">> 剔除颜色基准</label>
+                <div class="flex items-center gap-4 bg-black p-2 border border-cyan-900">
+                    <input type="color" id="targetColor" value="#ffffff" class="w-10 h-10 border-none cursor-pointer bg-transparent">
+                    <span id="colorHexDisplay" class="text-cyan-400 font-bold uppercase">#FFFFFF</span>
+                    <span class="text-xs text-gray-500 ml-auto">(默认: 纯白)</span>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex justify-between items-end">
+                    <label class="text-sm text-gray-400 uppercase">> 算法容差阈值</label>
+                    <span id="toleranceValue" class="text-pink-500 font-bold text-xl drop-shadow-[0_0_5px_rgba(255,0,255,0.8)]">20</span>
+                </div>
+                <input type="range" id="tolerance" min="0" max="150" value="20">
+                <p class="text-[10px] text-gray-500 leading-tight">调节阈值过滤相近像素。向右滑动扩散腐蚀边缘，向左滑动收缩保留细节。</p>
+            </div>
+
+            <div class="mt-4 p-3 border border-dashed border-gray-600 bg-black/50 text-xs text-gray-400">
+                <span class="text-yellow-400 font-bold block mb-1">系统警告 // 无服务器架构</span>
+                引擎直接调用本地 GPU/CPU 算力渲染。图像数据不会上传至公网节点，保证 100% 物理级隐私安全。
+            </div>
+
+            <button id="downloadBtn" class="cyber-btn w-full py-4 font-bold text-lg mt-auto opacity-50 cursor-not-allowed pointer-events-none flex justify-center items-center gap-2" disabled>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                [ 导出透明通道图像 ]
+            </button>
+        </div>
+
+        <div class="cyber-panel lg:col-span-8 flex flex-col h-[500px] lg:h-[650px] relative z-10 overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-8 bg-black/60 border-b border-cyan-800 flex items-center px-4 z-20">
+                <div class="flex gap-2">
+                    <div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_5px_#f00]"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500 shadow-[0_0_5px_#ff0]"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500 shadow-[0_0_5px_#0f0]"></div>
+                </div>
+                <span class="ml-4 text-xs text-cyan-500 font-bold uppercase tracking-widest">视觉输出缓冲阵列</span>
+            </div>
+            
+            <div class="flex-1 w-full relative checkerboard-dark flex items-center justify-center overflow-auto p-4 pt-12">
+                <div id="placeholder" class="text-center animate-pulse">
+                    <div class="text-5xl md:text-6xl text-cyan-900 mb-4 opacity-50 font-black tracking-widest">无_信_号</div>
+                    <p class="text-cyan-600 text-sm">> 正在等待目标图像载入...</p>
+                </div>
+
+                <canvas id="canvas" class="max-w-full max-h-full object-contain hidden border border-cyan-500/30 shadow-[0_0_20px_rgba(0,255,255,0.1)] transition-all duration-300"></canvas>
+            </div>
+            
+            <div class="h-1 w-full bg-gradient-to-r from-pink-500 via-cyan-500 to-yellow-500 absolute bottom-0 left-0 opacity-70"></div>
+        </div>
+    </main>
+
+    <script>
+        // DOM 元素获取
+        const fileInput = document.getElementById('fileInput');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const toleranceSlider = document.getElementById('tolerance');
+        const toleranceValue = document.getElementById('toleranceValue');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const placeholder = document.getElementById('placeholder');
+        const targetColorInput = document.getElementById('targetColor');
+        const colorHexDisplay = document.getElementById('colorHexDisplay');
+        
+        let currentImage = null;
+        let fileName = 'extracted_cyber_image.png';
+
+        // 监听文件上传
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // 提取原文件名用于下载
+            fileName = file.name.replace(/\.[^/.]+$/, "") + "_transparent.png";
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    currentImage = img;
+                    // 隐藏占位，显示画布
+                    placeholder.classList.add('hidden');
+                    canvas.classList.remove('hidden');
+                    
+                    // 激活下载按钮
+                    downloadBtn.disabled = false;
+                    downloadBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                    downloadBtn.classList.add('hover:bg-pink-500', 'hover:text-black');
+                    
+                    processImage();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // 将 HEX 颜色转为 RGB
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : {r: 255, g: 255, b: 255};
+        }
+
+        // 监听颜色选择器
+        targetColorInput.addEventListener('input', (e) => {
+            const hex = e.target.value;
+            colorHexDisplay.textContent = hex.toUpperCase();
+            processImage();
+        });
+
+        // 监听容差滑块
+        toleranceSlider.addEventListener('input', (e) => {
+            toleranceValue.textContent = e.target.value;
+            processImage();
+        });
+
+        // 核心抠图算法 (运行在客户端)
+        function processImage() {
+            if (!currentImage) return;
+
+            // 设置画布尺寸 (保持原画质)
+            canvas.width = currentImage.width;
+            canvas.height = currentImage.height;
+            
+            ctx.drawImage(currentImage, 0, 0);
+
+            // 读取像素矩阵
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            const tolerance = parseInt(toleranceSlider.value);
+            const targetColorHex = targetColorInput.value;
+            const targetRGB = hexToRgb(targetColorHex);
+
+            // 赛博矩阵运算开始... (遍历每一个像素点)
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i+1];
+                const b = data[i+2];
+
+                // 计算当前像素RGB三维空间中距离目标颜色的欧几里得距离
+                const distance = Math.sqrt(
+                    Math.pow(targetRGB.r - r, 2) + 
+                    Math.pow(targetRGB.g - g, 2) + 
+                    Math.pow(targetRGB.b - b, 2)
+                );
+
+                if (distance <= tolerance) {
+                    // 完全命中，彻底透明 (Alpha = 0)
+                    data[i+3] = 0; 
+                } else if (distance <= tolerance + 25) {
+                    // 边缘平滑 (抗锯齿)，避免抠出狗牙边缘
+                    const alphaRatio = (distance - tolerance) / 25;
+                    data[i+3] = Math.floor(255 * alphaRatio);
+                }
+            }
+
+            // 将处理后的数据写回画布
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // 下载功能
+        downloadBtn.addEventListener('click', () => {
+            if (!currentImage) return;
+            const link = document.createElement('a');
+            link.download = fileName; // 使用动态生成的文件名
+            link.href = canvas.toDataURL('image/png'); // 强制PNG保留透明度
+            link.click();
+        });
+    </script>
+</body>
+</html>
