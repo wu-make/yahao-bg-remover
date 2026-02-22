@@ -7,7 +7,7 @@ Online background removal tools / websites for removing image backgrounds.（在
 
 **Yahao - 在线图片去背景** 是一个极具赛博朋克（Cyberpunk）风格的纯前端网页工具，致力于为用户提供快速、安全的图像背景剔除服务。
 
-本工具无需注册，无需下载客户端。所有图像处理均依靠您的设备**本地算力（浏览器 Canvas API）**完成，**图片数据绝对不会被上传至任何云端服务器**，100% 捍卫您的物理级数据隐私。
+本工具无需注册，无需下载客户端。所有图像处理均依靠您的设备本地算力（浏览器 Canvas API）完成，**图片数据绝对不会被上传至任何云端服务器**，100% 捍卫您的数据隐私。
 
 👉 **[点击此处立即免费使用 Yahao 图片去底工具](https://wu-make.github.io/yahao-bg-remover/)**
 
